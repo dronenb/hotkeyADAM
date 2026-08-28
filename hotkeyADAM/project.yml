@@ -48,6 +48,8 @@ targets:
       - path: Tests/hotkeyADAMTests
     dependencies:
       - target: hotkeyADAM
+      - package: GRDB
+        product: GRDB
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.bendronen.hotkeyadam.tests

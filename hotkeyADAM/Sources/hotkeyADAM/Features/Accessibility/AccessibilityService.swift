@@ -2,9 +2,6 @@ import ApplicationServices
 import Foundation
 
 /// Thin wrapper around the macOS Accessibility (AX) trust APIs.
-///
-/// Phase 1 only exposes the trust check and request prompt. UI element
-/// indexing and click monitoring arrive in Phase 2.
 final class AccessibilityService {
     var isTrusted: Bool {
         AXIsProcessTrusted()
