@@ -9,13 +9,16 @@ final class IndexingService {
     private let indexer: MenuBarIndexer
     private let repository: ShortcutRepository
     private let notifications: NotificationService
+    private let profileStore: ProfileStore?
 
     init(indexer: MenuBarIndexer = MenuBarIndexer(),
          repository: ShortcutRepository,
-         notifications: NotificationService) {
+         notifications: NotificationService,
+         profileStore: ProfileStore? = nil) {
         self.indexer = indexer
         self.repository = repository
         self.notifications = notifications
+        self.profileStore = profileStore
     }
 
     /// Indexes an application's menu bar and persists any discovered shortcuts.
@@ -38,10 +41,11 @@ final class IndexingService {
 
     /// Handles a click at the given point in the given (frontmost) app:
     /// resolves the element under the cursor and, if a non-disabled shortcut is
-    /// known, posts a hint notification.
+    /// known (menu-bar index primary, imported profile opt-in), posts a hint.
     func handleClick(at point: CGPoint, application: NSRunningApplication) {
         guard let pid = application.processIdentifier as pid_t? else { return }
         let appName = application.localizedName ?? ""
+        let bundleIdentifier = application.bundleIdentifier ?? ""
         guard !appName.isEmpty else { return }
 
         let appElement = AXUIElementCreateApplication(pid)
@@ -51,10 +55,16 @@ final class IndexingService {
 
         let element = AXUIElementReader.element(from: axElement, appName: appName)
 
-        guard let shortcut = try? repository.shortcutString(for: element, appName: appName) else {
-            return
+        let shortcut: String?
+        if let indexed = try? repository.shortcutString(for: element, appName: appName), !indexed.isEmpty {
+            shortcut = indexed
+        } else {
+            shortcut = profileStore?.shortcut(for: element,
+                                              appName: appName,
+                                              bundleIdentifier: bundleIdentifier)
         }
-        guard !element.title.isEmpty else { return }
+
+        guard let shortcut, !element.title.isEmpty else { return }
 
         notifications.showShortcutHint(appName: appName,
                                        elementTitle: element.title,

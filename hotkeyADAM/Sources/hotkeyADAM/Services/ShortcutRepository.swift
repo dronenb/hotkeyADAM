@@ -111,6 +111,27 @@ final class ShortcutRepository: Sendable {
         }
     }
 
+    // MARK: - Browser data
+
+    /// Returns all indexed shortcut items (app name, item title, shortcut) for
+    /// the shortcut browser.
+    func allIndexedShortcuts() throws -> [IndexedShortcut] {
+        try appDatabase.dbWriter.read { db in
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT a.app_name AS appName, m.element_title AS title, s.shortcut_string AS shortcut
+                FROM menu_bar_items m
+                JOIN applications a ON a.id = m.application_id
+                JOIN shortcuts s ON s.id = m.shortcut_id
+                ORDER BY appName, title
+                """)
+            return rows.map { row in
+                IndexedShortcut(appName: row["appName"] as? String ?? "",
+                                itemTitle: row["title"] as? String ?? "",
+                                shortcut: row["shortcut"] as? String ?? "")
+            }
+        }
+    }
+
     // MARK: - Disabling
 
     func disableShortcut(element: UIElement, appName: String, shortcutString: String) throws {
@@ -126,4 +147,11 @@ final class ShortcutRepository: Sendable {
             try record.upsert(db)
         }
     }
+}
+
+/// A shortcut discovered by indexing, ready to display in the browser.
+struct IndexedShortcut: Equatable {
+    let appName: String
+    let itemTitle: String
+    let shortcut: String
 }

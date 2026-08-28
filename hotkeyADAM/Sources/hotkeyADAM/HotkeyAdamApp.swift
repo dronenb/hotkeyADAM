@@ -12,5 +12,18 @@ struct HotkeyAdamApp: App {
             Image(systemName: "keyboard")
         }
         .menuBarExtraStyle(.menu)
+
+        Window("Shortcuts", id: "shortcuts") {
+            ShortcutsBrowserView()
+                .environmentObject(appModel)
+                .frame(minWidth: 360, minHeight: 320)
+        }
+
+        Window("Import Profile", id: "import-profile") {
+            ProfileImportView { url in
+                try appModel.importProfile(from: url)
+            }
+            .environmentObject(appModel)
+        }
     }
 }
