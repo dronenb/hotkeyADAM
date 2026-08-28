@@ -1,0 +1,57 @@
+version: "3"
+
+vars:
+  PROJECT: hotkeyADAM/hotkeyADAM.xcodeproj
+  SCHEME: hotkeyADAM
+  DESTINATION: platform=macOS
+  BUILDDIR: .build
+  RESOLVED: hotkeyADAM/Package.resolved
+  GENERATED_RESOLVED: hotkeyADAM/hotkeyADAM.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+tasks:
+  default:
+    desc: Generate project, build, and run tests.
+    cmds:
+      - task: setup
+      - task: test
+      - task: build
+
+  setup:
+    desc: Install tooling and generate the Xcode project from project.yml.
+    cmds:
+      - cmd: command -v xcodegen >/dev/null 2>&1 || brew install xcodegen
+        silent: true
+      - task: generate
+
+  generate:
+    desc: Regenerate the Xcode project from project.yml, preserving pinned package versions.
+    cmds:
+      - xcodegen generate --spec hotkeyADAM/project.yml
+      - cmd: cp {{.RESOLVED}} {{.GENERATED_RESOLVED}} 2>/dev/null || true
+        silent: true
+
+  deps:
+    desc: Resolve Swift packages and snapshot pinned versions.
+    deps: [generate]
+    cmds:
+      - xcodebuild -project {{.PROJECT}} -scheme {{.SCHEME}} -resolvePackageDependencies
+      - cp {{.GENERATED_RESOLVED}} {{.RESOLVED}}
+
+  build:
+    desc: Build the app (Debug).
+    deps: [generate]
+    cmds:
+      - xcodebuild -project {{.PROJECT}} -scheme {{.SCHEME}} -destination '{{.DESTINATION}}' -derivedDataPath {{.BUILDDIR}} build
+
+  test:
+    desc: Build and run unit tests.
+    deps: [generate]
+    cmds:
+      - xcodebuild -project {{.PROJECT}} -scheme {{.SCHEME}} -destination '{{.DESTINATION}}' -derivedDataPath {{.BUILDDIR}} test
+
+  clean:
+    desc: Remove build artifacts and the generated Xcode project.
+    cmds:
+      - rm -rf {{.BUILDDIR}}
+      - rm -rf {{.PROJECT}}
+      - rm -rf hotkeyADAM/*.xcodeproj

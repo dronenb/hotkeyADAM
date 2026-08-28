@@ -1,0 +1,64 @@
+name: hotkeyADAM
+options:
+  bundleIdPrefix: com.bendronen
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "6.0.0"
+
+targets:
+  hotkeyADAM:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/hotkeyADAM
+    dependencies:
+      - package: GRDB
+        product: GRDB
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bendronen.hotkeyadam
+        PRODUCT_NAME: hotkeyADAM
+        INFOPLIST_FILE: Sources/hotkeyADAM/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: Sources/hotkeyADAM/hotkeyADAM.entitlements
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+
+  hotkeyADAMTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/hotkeyADAMTests
+    dependencies:
+      - target: hotkeyADAM
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bendronen.hotkeyadam.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  hotkeyADAM:
+    build:
+      targets:
+        hotkeyADAM: all
+        hotkeyADAMTests: [test]
+    test:
+      targets:
+        - hotkeyADAMTests
